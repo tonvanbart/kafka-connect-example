@@ -1,0 +1,36 @@
+{
+  "$schema": "/mediawiki/recentchange/1.0.0",
+  "meta": {
+    "uri": "https://en.wikipedia.org/wiki/Natural_philosophy",
+    "request_id": "72cfd6f9-97df-48f7-b700-387abd41e014",
+    "id": "91a83a6b-c7df-4123-993e-ff9e077c8321",
+    "dt": "2022-03-22T23:02:49Z",
+    "domain": "en.wikipedia.org",
+    "stream": "mediawiki.recentchange",
+    "topic": "eqiad.mediawiki.recentchange",
+    "partition": 0,
+    "offset": 3735298139
+  },
+  "id": 1488154665,
+  "type": "edit",
+  "namespace": 0,
+  "title": "Natural philosophy",
+  "comment": "removed uncited (and false) claim - Isaac Newton was not an exponent of mechanistic philosophy, it was others who cited his theory for their own claims",
+  "timestamp": 1647990169,
+  "user": "Jaredscribe",
+  "bot": false,
+  "minor": false,
+  "length": {
+    "old": 33870,
+    "new": 33883
+  },
+  "revision": {
+    "old": 1078712592,
+    "new": 1078712889
+  },
+  "server_url": "https://en.wikipedia.org",
+  "server_name": "en.wikipedia.org",
+  "server_script_path": "/w",
+  "wiki": "enwiki",
+  "parsedcomment": "removed uncited (and false) claim - Isaac Newton was not an exponent of mechanistic philosophy, it was others who cited his theory for their own claims"
+}
