@@ -47,8 +47,11 @@ public class WikiClient {
         EventSource eventSource = EventSource.target(webTarget).build();
         EventListener eventListener = inboundEvent -> log.info("name={}, data={}", inboundEvent.getName(), inboundEvent.readData());
         eventSource.register(eventListener);
+        log.info("opening event source");
         eventSource.open();
+        log.info("sleeping thread");
         Thread.sleep(3000);
+        log.info("closing event source");
         eventSource.close();
     }
 
