@@ -1,14 +1,23 @@
 package org.tonvanbart.wikipedia.eventstream;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.glassfish.jersey.media.sse.*;
 
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.WebTarget;
+import java.util.Optional;
 
 @Slf4j
 public class WikiClient {
+
+    private ObjectMapper objectMapper;
+
+    public WikiClient() {
+        objectMapper = new ObjectMapper();
+    }
 
     public void consumeEventStream(String url) throws Exception {
         log.debug("consumeEventStream()");
@@ -45,14 +54,29 @@ public class WikiClient {
                 .build();
         WebTarget webTarget = client.target(url);
         EventSource eventSource = EventSource.target(webTarget).build();
-        EventListener eventListener = inboundEvent -> log.info("name={}, data={}", inboundEvent.getName(), inboundEvent.readData());
-        eventSource.register(eventListener);
+//        EventListener eventListener = inboundEvent -> log.info("name={}, data={}", inboundEvent.getName(), inboundEvent.readData());
+        eventSource.register(this::handleEvent);
         log.info("opening event source");
         eventSource.open();
         log.info("sleeping thread");
         Thread.sleep(3000);
         log.info("closing event source");
         eventSource.close();
+    }
+
+    Optional<EditEvent> handleEvent(InboundEvent inboundEvent) {
+        log.debug("handleEvent({})", inboundEvent);
+        if ( ! "message".equals(inboundEvent.getName())) {
+            return Optional.empty();
+        }
+        try {
+            var editEvent = objectMapper.readValue(inboundEvent.readData(), EditEvent.class);
+            log.info("got event {}", editEvent);
+            return Optional.of(editEvent);
+        } catch (JsonProcessingException e) {
+            log.error("Failed to parse event data {}", inboundEvent.readData(), e);
+            return Optional.empty();
+        }
     }
 
 }

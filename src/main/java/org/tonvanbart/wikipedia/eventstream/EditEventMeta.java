@@ -2,20 +2,17 @@ package org.tonvanbart.wikipedia.eventstream;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Data;
-import lombok.ToString;
 
 @Data
-@ToString
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class EditEvent {
+public class EditEventMeta {
 
-    private EditEventMeta meta;
+    private String domain;
 
-    private String user;
+    private String topic;
 
-    private String comment;
+    private int partition;
 
-    private String title;
-
+    private long offset;
 
 }
