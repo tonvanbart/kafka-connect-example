@@ -127,7 +127,7 @@ public class WikiSourceTask extends SourceTask {
         ObjectMapper mapper = new ObjectMapper();
         try {
             var payload = mapper.writeValueAsString(new Payload(user, title, comment));
-            return new SourceRecord(sourcePartition, sourceOffset, topic, Schema.STRING_SCHEMA, payload);
+            return new SourceRecord(sourcePartition, sourceOffset, outputTopic, Schema.STRING_SCHEMA, payload);
         } catch (JsonProcessingException e) {
             log.error("Failed to generate payload, skipping record");
             return null;
