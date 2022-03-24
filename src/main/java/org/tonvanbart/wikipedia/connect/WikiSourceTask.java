@@ -82,6 +82,19 @@ public class WikiSourceTask extends SourceTask {
         return "0.0.1";
     }
 
+    /**
+     * Create event source instance for this task.
+     * This method is package protected to be able to inject a mock.
+     * @return
+     */
+    EventSource createEventSource() {
+        Client client = ClientBuilder.newBuilder()
+                .register(SseFeature.class)
+                .build();
+        WebTarget webTarget = client.target(EDIT_STREAM_URL);
+        return EventSource.target(webTarget).build();
+    }
+
     private void handleEvent(InboundEvent inboundEvent) {
         try {
             if ("message".equals(inboundEvent.getName())) {
