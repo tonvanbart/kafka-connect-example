@@ -46,24 +46,23 @@ public class WikiSourceTask extends SourceTask {
 
     @Override
     public void start(Map<String, String> props) {
+        log.debug("start({})", props);
         config = new WikiSourceConfig(props);
         objectMapper = new ObjectMapper();
         languageToSelect = config.getWikiLanguageConfig();
         outputTopic = config.getTargetTopicConfig();
 
-        Client client = ClientBuilder.newBuilder()
-                .register(SseFeature.class)
-                .build();
-        WebTarget webTarget = client.target(EDIT_STREAM_URL);
-        eventSource = EventSource.target(webTarget).build();
+        eventSource = createEventSource();
         eventSource.register(this::handleEvent);
         eventSource.open();
     }
 
     @Override
     public List<SourceRecord> poll() throws InterruptedException {
+        log.debug("poll({} events)", incomingEvents.size());
         List<String> eventsToSend = new ArrayList<>();
         incomingEvents.drainTo(eventsToSend);
+        log.debug("processing {} events", eventsToSend.size());
         return eventsToSend.stream()
                 .map(this::convertToSourceRecord)
                 .filter(Optional::isPresent)
@@ -73,6 +72,7 @@ public class WikiSourceTask extends SourceTask {
 
     @Override
     public void stop() {
+        log.debug("stop()");
         eventSource.close();
     }
 
@@ -88,6 +88,7 @@ public class WikiSourceTask extends SourceTask {
      * @return
      */
     EventSource createEventSource() {
+        log.debug("createEventSource()");
         Client client = ClientBuilder.newBuilder()
                 .register(SseFeature.class)
                 .build();
@@ -95,7 +96,8 @@ public class WikiSourceTask extends SourceTask {
         return EventSource.target(webTarget).build();
     }
 
-    private void handleEvent(InboundEvent inboundEvent) {
+    void handleEvent(InboundEvent inboundEvent) {
+        log.debug("handleEvent({})", inboundEvent.getName());
         try {
             if ("message".equals(inboundEvent.getName())) {
                 incomingEvents.put(inboundEvent.readData());
@@ -109,10 +111,13 @@ public class WikiSourceTask extends SourceTask {
     private Optional<SourceRecord> convertToSourceRecord(String editEventJson) {
         try {
             var editEvent = objectMapper.readValue(editEventJson, EditEvent.class);
+            log.debug("Got an event for {}", editEvent.getMeta().getDomain());
             if (editEvent.getMeta().getDomain().startsWith(languageToSelect)) {
+                log.debug("select event for forwarding");
                 var sourceRecord = sourcerecord()
                         .topic(editEvent.getMeta().getTopic())
                         .partition(editEvent.getMeta().getPartition())
+                        .domain(editEvent.getMeta().getDomain())
                         .offset(editEvent.getMeta().getOffset())
                         .user(editEvent.getUser())
                         .title(editEvent.getTitle())
@@ -129,10 +134,11 @@ public class WikiSourceTask extends SourceTask {
     }
 
     @Builder(builderMethodName = "sourcerecord")
-    private SourceRecord buildSourceRecord(String topic, Integer partition, Long offset, String user, String title, String comment) {
+    private SourceRecord buildSourceRecord(String topic, Integer partition, String domain, Long offset, String user, String title, String comment) {
         Map<String, Object> sourcePartition = new HashMap<>();
         sourcePartition.put("topic", topic);
         sourcePartition.put("partition", partition);
+        sourcePartition.put("domain", domain);
 
         Map<String, Object> sourceOffset = new HashMap<>();
         sourceOffset.put("offset", offset);

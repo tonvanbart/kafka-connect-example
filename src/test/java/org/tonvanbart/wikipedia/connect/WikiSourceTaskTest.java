@@ -1,11 +1,17 @@
 package org.tonvanbart.wikipedia.connect;
 
+import org.apache.kafka.connect.source.SourceRecord;
 import org.glassfish.jersey.media.sse.EventSource;
+import org.glassfish.jersey.media.sse.InboundEvent;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
@@ -14,6 +20,9 @@ class WikiSourceTaskTest {
 
     @Mock
     private EventSource eventSource;
+
+    @Mock
+    private InboundEvent inboundEvent;
 
     private WikiSourceTask wikiSourceTask;
 
@@ -31,4 +40,19 @@ class WikiSourceTaskTest {
     void testTaskCreation() {
         assertNotNull(wikiSourceTask);
     }
+
+    @Test
+    void eventIsForwarded() throws Exception {
+        wikiSourceTask = new WikiSourceTask();
+        Map<String, String> props= new HashMap<>();
+        props.put("wiki.language", "en");
+        props.put("target.topic", "en-edits");
+        wikiSourceTask.start(props);
+        Thread.sleep(6000);
+        wikiSourceTask.stop();
+        var sourceRecords = wikiSourceTask.poll();
+        System.out.println("Got "+sourceRecords.size() + " source records");
+        sourceRecords.forEach(System.out::println);
+    }
+
 }
