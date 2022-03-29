@@ -1,0 +1,9 @@
+{
+  "connector.class": "org.tonvanbart.wikipedia.connect.WikiSourceConnector",
+  "tasks.max": "1",
+  "wiki.language": "en",
+  "target.topic": "wikipedia_edits",
+  "key.converter": "org.apache.kafka.connect.converters.ByteArrayConverter",
+  "value.converter": "org.apache.kafka.connect.converters.ByteArrayConverter",
+  "header.converter": "org.apache.kafka.connect.converters.ByteArrayConverter"
+}

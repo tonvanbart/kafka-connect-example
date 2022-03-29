@@ -48,11 +48,14 @@ class WikiSourceTaskTest {
         props.put("wiki.language", "en");
         props.put("target.topic", "en-edits");
         wikiSourceTask.start(props);
-        Thread.sleep(6000);
+        Thread.sleep(4000);
+        var sourceRecords1 = wikiSourceTask.poll();
+        System.out.println("sourceRecords1.size() = " + sourceRecords1.size());
+        Thread.sleep(4000);
         wikiSourceTask.stop();
         var sourceRecords = wikiSourceTask.poll();
-        System.out.println("Got "+sourceRecords.size() + " source records");
-        sourceRecords.forEach(System.out::println);
+//        System.out.println("Got "+sourceRecords.size() + " source records");
+//        sourceRecords.forEach(System.out::println);
     }
 
 }
