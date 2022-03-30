@@ -29,3 +29,8 @@ Instructions in telegram style:
    ```shell
    curl -X POST -H "Content-Type: application/json" -d @src/test/resources/add-source-connector.json localhost:8082/connectors | jq
    ```
+   
+### Checking the original SSE stream
+```shell
+curl -N https://stream.wikimedia.org/v2/stream/recentchange
+```
