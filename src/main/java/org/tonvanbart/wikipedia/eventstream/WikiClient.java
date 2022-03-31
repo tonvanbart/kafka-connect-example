@@ -3,11 +3,12 @@ package org.tonvanbart.wikipedia.eventstream;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
-import org.glassfish.jersey.media.sse.*;
 
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.WebTarget;
+import javax.ws.rs.sse.InboundSseEvent;
+import javax.ws.rs.sse.SseEventSource;
 import java.util.Optional;
 
 @Slf4j
@@ -19,41 +20,39 @@ public class WikiClient {
         objectMapper = new ObjectMapper();
     }
 
-    public void consumeEventStream(String url) throws Exception {
-        log.debug("consumeEventStream()");
-        Client client = ClientBuilder.newBuilder().register(new SseFeature()).build();
-        WebTarget target = client.target(url);
-        EventInput eventInput = null;
-        while (true) {
-            Thread.sleep(100);
-            if (eventInput == null || eventInput.isClosed()) {
-                // (re)connect
-                eventInput = target.request().get(EventInput.class);
-                eventInput.setChunkType("text/event-stream");
-            }
-
-            final InboundEvent inboundEvent = eventInput.read();
-            log.info("InboundEvent={}", inboundEvent);
-            if (inboundEvent == null) {
-                break;
-            }
-            else {
-                String data = inboundEvent.readData();
-                log.info("got data: {}", data);
-                // do something here - notify observers, parse json etc
-            }
-
-        }
-        log.info("connection closed");
-    }
+//    public void consumeEventStream(String url) throws Exception {
+//        log.debug("consumeEventStream()");
+//        Client client = ClientBuilder.newBuilder().register(new SseFeature()).build();
+//        WebTarget target = client.target(url);
+//        EventInput eventInput = null;
+//        while (true) {
+//            Thread.sleep(100);
+//            if (eventInput == null || eventInput.isClosed()) {
+//                // (re)connect
+//                eventInput = target.request().get(EventInput.class);
+//                eventInput.setChunkType("text/event-stream");
+//            }
+//
+//            final InboundEvent inboundEvent = eventInput.read();
+//            log.info("InboundEvent={}", inboundEvent);
+//            if (inboundEvent == null) {
+//                break;
+//            }
+//            else {
+//                String data = inboundEvent.readData();
+//                log.info("got data: {}", data);
+//                // do something here - notify observers, parse json etc
+//            }
+//
+//        }
+//        log.info("connection closed");
+//    }
 
     void consumeAsync(String url) throws InterruptedException {
         log.info("consumeAsync({})", url);
-        Client client = ClientBuilder.newBuilder()
-                .register(SseFeature.class)
-                .build();
+        Client client = ClientBuilder.newClient();
         WebTarget webTarget = client.target(url);
-        EventSource eventSource = EventSource.target(webTarget).build();
+        SseEventSource eventSource = SseEventSource.target(webTarget).build();
 //        EventListener eventListener = inboundEvent -> log.info("name={}, data={}", inboundEvent.getName(), inboundEvent.readData());
         eventSource.register(this::handleEvent);
         log.info("opening event source");
@@ -64,7 +63,7 @@ public class WikiClient {
         eventSource.close();
     }
 
-    Optional<EditEvent> handleEvent(InboundEvent inboundEvent) {
+    Optional<EditEvent> handleEvent(InboundSseEvent inboundEvent) {
         log.debug("handleEvent({})", inboundEvent);
         if ( ! "message".equals(inboundEvent.getName())) {
             return Optional.empty();

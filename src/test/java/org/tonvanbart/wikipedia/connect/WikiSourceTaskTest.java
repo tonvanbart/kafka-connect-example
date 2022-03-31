@@ -1,16 +1,14 @@
 package org.tonvanbart.wikipedia.connect;
 
-import org.apache.kafka.connect.source.SourceRecord;
-import org.glassfish.jersey.media.sse.EventSource;
-import org.glassfish.jersey.media.sse.InboundEvent;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import javax.ws.rs.sse.InboundSseEvent;
+import javax.ws.rs.sse.SseEventSource;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -19,10 +17,10 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 class WikiSourceTaskTest {
 
     @Mock
-    private EventSource eventSource;
+    private SseEventSource eventSource;
 
     @Mock
-    private InboundEvent inboundEvent;
+    private InboundSseEvent inboundEvent;
 
     private WikiSourceTask wikiSourceTask;
 
@@ -30,7 +28,7 @@ class WikiSourceTaskTest {
     void createFixture() {
         wikiSourceTask = new WikiSourceTask() {
             @Override
-            EventSource createEventSource() {
+            SseEventSource createEventSource() {
                 return eventSource;
             }
         };

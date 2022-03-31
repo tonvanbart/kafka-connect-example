@@ -9,14 +9,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.connect.data.Schema;
 import org.apache.kafka.connect.source.SourceRecord;
 import org.apache.kafka.connect.source.SourceTask;
-import org.glassfish.jersey.media.sse.EventSource;
-import org.glassfish.jersey.media.sse.InboundEvent;
-import org.glassfish.jersey.media.sse.SseFeature;
 import org.tonvanbart.wikipedia.eventstream.EditEvent;
 
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.WebTarget;
+import javax.ws.rs.sse.InboundSseEvent;
+import javax.ws.rs.sse.SseEventSource;
 import java.util.*;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -32,7 +31,7 @@ public class WikiSourceTask extends SourceTask {
 
     private BlockingQueue<String> incomingEvents = new LinkedBlockingQueue<>();
 
-    private EventSource eventSource;
+    private SseEventSource eventSource;
 
     private WikiSourceConfig config;
 
@@ -119,16 +118,14 @@ public class WikiSourceTask extends SourceTask {
      * This method is package protected to be able to inject a mock.
      * @return
      */
-    EventSource createEventSource() {
+    SseEventSource createEventSource() {
         log.debug("createEventSource()");
-        Client client = ClientBuilder.newBuilder()
-                .register(SseFeature.class)
-                .build();
+        Client client = ClientBuilder.newClient();
         WebTarget webTarget = client.target(EDIT_STREAM_URL);
-        return EventSource.target(webTarget).build();
+        return SseEventSource.target(webTarget).build();
     }
 
-    void handleEvent(InboundEvent inboundEvent) {
+    void handleEvent(InboundSseEvent inboundEvent) {
         log.info("handleEvent({})", inboundEvent.getName());
         try {
             if ("message".equals(inboundEvent.getName())) {

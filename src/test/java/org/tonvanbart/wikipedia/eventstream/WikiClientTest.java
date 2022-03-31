@@ -15,14 +15,14 @@ public class WikiClientTest {
         wikiClient = new WikiClient();
     }
 
-    @Test
-    @Disabled("manual run only, endless loop!")
-    void testConsuming() throws Exception {
-        wikiClient.consumeEventStream("https://stream.wikimedia.org/v2/stream/recentchange");
-    }
+//    @Test
+//    @Disabled("manual run only, endless loop!")
+//    void testConsuming() throws Exception {
+//        wikiClient.consumeEventStream("https://stream.wikimedia.org/v2/stream/recentchange");
+//    }
 
-    @Test
-    void testAsync() throws Exception {
-        wikiClient.consumeAsync("https://stream.wikimedia.org/v2/stream/recentchange");
-    }
+//    @Test
+//    void testAsync() throws Exception {
+//        wikiClient.consumeAsync("https://stream.wikimedia.org/v2/stream/recentchange");
+//    }
 }
