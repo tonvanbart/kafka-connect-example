@@ -69,7 +69,7 @@ public class WikiClient {
             return Optional.empty();
         }
         try {
-            var editEvent = objectMapper.readValue(inboundEvent.readData(), EditEvent.class);
+            EditEvent editEvent = objectMapper.readValue(inboundEvent.readData(), EditEvent.class);
             log.info("got event {}", editEvent);
             return Optional.of(editEvent);
         } catch (JsonProcessingException e) {

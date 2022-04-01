@@ -139,11 +139,11 @@ public class WikiSourceTask extends SourceTask {
 
     private Optional<SourceRecord> convertToSourceRecord(String editEventJson) {
         try {
-            var editEvent = objectMapper.readValue(editEventJson, EditEvent.class);
+            EditEvent editEvent = objectMapper.readValue(editEventJson, EditEvent.class);
             log.debug("Got an event for {}", editEvent.getMeta().getDomain());
             if (editEvent.getMeta().getDomain().startsWith(languageToSelect)) {
                 log.debug("select event for forwarding");
-                var sourceRecord = sourcerecord()
+                SourceRecord sourceRecord = sourcerecord()
                         .topic(editEvent.getMeta().getTopic())
                         .partition(editEvent.getMeta().getPartition())
                         .domain(editEvent.getMeta().getDomain())
@@ -174,7 +174,7 @@ public class WikiSourceTask extends SourceTask {
 
         ObjectMapper mapper = new ObjectMapper();
         try {
-            var payload = mapper.writeValueAsString(new Payload(user, title, comment));
+            String payload = mapper.writeValueAsString(new Payload(user, title, comment));
             return new SourceRecord(sourcePartition, sourceOffset, outputTopic, Schema.STRING_SCHEMA, payload);
         } catch (JsonProcessingException e) {
             log.error("Failed to generate payload, skipping record");
