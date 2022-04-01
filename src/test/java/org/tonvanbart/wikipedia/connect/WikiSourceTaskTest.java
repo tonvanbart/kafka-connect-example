@@ -13,9 +13,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import lombok.extern.slf4j.Slf4j;
+
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+@Slf4j
 @ExtendWith(MockitoExtension.class)
 class WikiSourceTaskTest {
 
@@ -55,6 +58,7 @@ class WikiSourceTaskTest {
         assertTrue(sourceRecords1.size() > 0, "There should be some sourcerecords");
         Thread.sleep(4000);
         wikiSourceTask.stop();
+        log.info("Got {} source records after first poll()", sourceRecords1.size());
 //        List<SourceRecord> sourceRecords = wikiSourceTask.poll();
 //        System.out.println("Got "+sourceRecords.size() + " source records");
 //        sourceRecords.forEach(System.out::println);

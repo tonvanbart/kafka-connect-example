@@ -43,7 +43,7 @@ services:
     depends_on:
       - broker
     volumes:
-      - ./target/connect-plugin:/plugins
+      - ./plugin-jars:/plugins
     ports:
       - "8082:8082"
     environment:
@@ -62,5 +62,4 @@ services:
       CONNECT_INTERNAL_VALUE_CONVERTER: 'org.apache.kafka.connect.json.JsonConverter'
       CONNECT_REST_ADVERTISED_HOST_NAME: 'localhost'
       CONNECT_PLUGIN_PATH: '/plugins'
-      CONNECT_LOG4J_LOGGERS: "log4j.logger.io.confluent.wikipedia-source-connector=DEBUG,org.apache.kafka.connect=DEBUG"
 
