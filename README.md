@@ -29,3 +29,14 @@ Instructions in telegram style:
    ```shell
    curl -X POST -H "Content-Type: application/json" -d @src/test/resources/add-source-connector.json localhost:8082/connectors | jq
    ```
+   
+#### Makefile targets
+For convenience, there is a Makefile which can perform some tasks:
+
+| Command | result |
+|---------|--------|
+| `make add-connector` | installs the compiled connector |
+| `make log-debug` | set log level to DEBUG for the connector classes |
+| `make log-info` | set log level to INFO for the connector classes |
+| `make update-config` | Update connector config using values in [`update-config.json`](src/test/resources/update-config.json) |
+| `make list-status` | list connector status (needs `jq`) |
