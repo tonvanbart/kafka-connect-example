@@ -30,16 +30,6 @@ class WikiSourceTaskTest {
 
     private WikiSourceTask wikiSourceTask;
 
-    @BeforeEach
-    void createFixture() {
-        wikiSourceTask = new WikiSourceTask() {
-            @Override
-            SseEventSource createEventSource() {
-                return eventSource;
-            }
-        };
-    }
-
     @Test
     void testTaskCreation() {
         assertNotNull(wikiSourceTask);
@@ -53,14 +43,10 @@ class WikiSourceTaskTest {
         props.put("target.topic", "en-edits");
         wikiSourceTask.start(props);
         Thread.sleep(4000);
-        List<SourceRecord> sourceRecords1 = wikiSourceTask.poll();
-        System.out.println("sourceRecords1.size() = " + sourceRecords1.size());
-        assertTrue(sourceRecords1.size() > 0, "There should be some sourcerecords");
-        Thread.sleep(4000);
+        List<SourceRecord> sourceRecords = wikiSourceTask.poll();
+        log.info("sourceRecords.size() = {}", sourceRecords.size());
+        assertTrue(sourceRecords.size() > 0, "There should be some sourcerecords");
         wikiSourceTask.stop();
-        log.info("Got {} source records after first poll()", sourceRecords1.size());
-//        List<SourceRecord> sourceRecords = wikiSourceTask.poll();
-//        System.out.println("Got "+sourceRecords.size() + " source records");
 //        sourceRecords.forEach(System.out::println);
     }
 

@@ -29,10 +29,6 @@ import java.util.stream.Collectors;
 @Slf4j
 public class WikiSourceTask extends SourceTask {
 
-    private BlockingQueue<String> incomingEvents = new LinkedBlockingQueue<>();
-
-    private SseEventSource eventSource;
-
     private WikiSourceConfig config;
 
     private String languageToSelect;
@@ -43,13 +39,13 @@ public class WikiSourceTask extends SourceTask {
 
     public static final String TASK_ID = "task.id";
 
-    private static final String EDIT_STREAM_URL = "https://stream.wikimedia.org/v2/stream/recentchange";
-
     private final AtomicBoolean isRunning = new AtomicBoolean(false);
 
     private final AtomicLong taskThreadId = new AtomicLong(0);
 
     private final AtomicLong lastPoll = new AtomicLong(0);
+
+    private final WikiSourceEventHandler eventHandler = new WikiSourceEventHandler();
 
     @Override
     public void start(Map<String, String> props) {
@@ -59,18 +55,15 @@ public class WikiSourceTask extends SourceTask {
         languageToSelect = config.getWikiLanguageConfig();
         outputTopic = config.getTargetTopicConfig();
 
-        eventSource = createEventSource();
-        eventSource.register(this::handleEvent);
-        eventSource.open();
+        eventHandler.start();
         isRunning.set(true);
         taskThreadId.set(Thread.currentThread().getId());
     }
 
     @Override
     public List<SourceRecord> poll() throws InterruptedException {
-        log.info("poll() - isRunning = {}", isRunning.get());
+        log.debug("poll() - isRunning = {}", isRunning.get());
         if (isRunning.get()) {
-            log.info("poll({} events)", incomingEvents.size());
             long nextPoll = lastPoll.longValue() + 3000;
             long now = System.currentTimeMillis();
             long sleepInterval = Math.min(nextPoll - now, 3000);
@@ -84,7 +77,7 @@ public class WikiSourceTask extends SourceTask {
             }
             lastPoll.set(System.currentTimeMillis());
             List<String> eventsToSend = new ArrayList<>();
-            incomingEvents.drainTo(eventsToSend);
+            eventHandler.drainTo(eventsToSend);
             log.debug("processing {} events", eventsToSend.size());
             return eventsToSend.stream()
                     .map(this::convertToSourceRecord)
@@ -93,7 +86,7 @@ public class WikiSourceTask extends SourceTask {
                     .collect(Collectors.toList());
         } else {
             log.info("Closing resources");
-            eventSource.close();
+            eventHandler.stop();
             return null;
         }
     }
@@ -103,7 +96,7 @@ public class WikiSourceTask extends SourceTask {
         log.info("stop()");
         isRunning.set(false);
         if (taskThreadId.longValue() == Thread.currentThread().getId()) {
-            eventSource.close();
+            eventHandler.stop();
         }
     }
 
@@ -111,30 +104,6 @@ public class WikiSourceTask extends SourceTask {
     public String version() {
         // TODO get from Maven POM.
         return "0.0.1";
-    }
-
-    /**
-     * Create event source instance for this task.
-     * This method is package protected to be able to inject a mock.
-     * @return
-     */
-    SseEventSource createEventSource() {
-        log.debug("createEventSource()");
-        Client client = ClientBuilder.newClient();
-        WebTarget webTarget = client.target(EDIT_STREAM_URL);
-        return SseEventSource.target(webTarget).build();
-    }
-
-    void handleEvent(InboundSseEvent inboundEvent) {
-        log.info("handleEvent({})", inboundEvent.getName());
-        try {
-            if ("message".equals(inboundEvent.getName())) {
-                incomingEvents.put(inboundEvent.readData());
-            }
-        } catch (InterruptedException e) {
-            log.error("Error queueing event, stopping task", e);
-            this.stop();
-        }
     }
 
     private Optional<SourceRecord> convertToSourceRecord(String editEventJson) {
