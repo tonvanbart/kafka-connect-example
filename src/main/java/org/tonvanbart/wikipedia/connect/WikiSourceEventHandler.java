@@ -26,11 +26,15 @@ public class WikiSourceEventHandler implements Consumer<InboundSseEvent> {
     }
 
     public void start() {
+        log.info("before open: eventSource.isOpen()={}", eventSource.isOpen());
         eventSource.open();
+        log.info("after open: eventSource.isOpen()={}", eventSource.isOpen());
     }
 
     public void stop() {
+        log.info("before close: eventSource.isOpen()={}", eventSource.isOpen());
         eventSource.close();
+        log.info("after close: eventSource.isOpen()={}", eventSource.isOpen());
     }
 
     @Override
@@ -58,6 +62,7 @@ public class WikiSourceEventHandler implements Consumer<InboundSseEvent> {
     SseEventSource createEventSource() {
         log.debug("createEventSource()");
         Client client = ClientBuilder.newClient();
+        log.info("client is a: {}", client.getClass().getName());
         WebTarget webTarget = client.target(EDIT_STREAM_URL);
         return SseEventSource.target(webTarget).build();
     }
