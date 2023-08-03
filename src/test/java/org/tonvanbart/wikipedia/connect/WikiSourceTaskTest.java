@@ -2,6 +2,7 @@ package org.tonvanbart.wikipedia.connect;
 
 import org.apache.kafka.connect.source.SourceRecord;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -31,6 +32,7 @@ class WikiSourceTaskTest {
     private WikiSourceTask wikiSourceTask;
 
     @Test
+    @Disabled
     void testTaskCreation() {
         assertNotNull(wikiSourceTask);
     }

@@ -49,8 +49,7 @@ public class WikiSourceConnector extends SourceConnector {
 
     @Override
     public String version() {
-        // TODO get from Maven POM
-        return "0.0.1";
+        return WikiSourceConfig.getProjectVersion() + " built:" + WikiSourceConfig.getBuildDate();
     }
 
     private Map<String, String> createTaskConfig(int taskNumber) {

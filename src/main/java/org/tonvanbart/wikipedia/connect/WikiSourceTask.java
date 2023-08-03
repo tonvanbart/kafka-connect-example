@@ -45,7 +45,7 @@ public class WikiSourceTask extends SourceTask {
 
     private final AtomicLong lastPoll = new AtomicLong(0);
 
-    private final WikiSourceEventHandler eventHandler = new WikiSourceEventHandler();
+    private WikiSourceEventHandler eventHandler; // = new WikiSourceEventHandler();
 
     @Override
     public void start(Map<String, String> props) {
@@ -55,6 +55,7 @@ public class WikiSourceTask extends SourceTask {
         languageToSelect = config.getWikiLanguageConfig();
         outputTopic = config.getTargetTopicConfig();
 
+        eventHandler = new WikiSourceEventHandler();
         eventHandler.start();
         isRunning.set(true);
         taskThreadId.set(Thread.currentThread().getId());

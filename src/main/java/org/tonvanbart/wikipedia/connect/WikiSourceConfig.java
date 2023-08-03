@@ -4,7 +4,10 @@ import org.apache.kafka.common.config.AbstractConfig;
 import org.apache.kafka.common.config.ConfigDef;
 import org.apache.kafka.common.config.ConfigException;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Map;
+import java.util.Properties;
 
 /**
  * Example configuration for the Wiki edits connector.
@@ -40,6 +43,21 @@ public class WikiSourceConfig extends AbstractConfig {
         return new ConfigDef(CONFIG_DEF);
     }
 
+    static final String PROJECT_VERSION = "version";
+
+    static final String BUILD_DATE = "build.date";
+
+    static Properties buildProperties = new Properties();
+
+    static {
+        try (final InputStream in = WikiSourceConfig.class.getClassLoader().getResourceAsStream("version.properties")) {
+            buildProperties.load(in);
+        } catch (IOException e) {
+            buildProperties.put(PROJECT_VERSION, "(read failed)");
+            buildProperties.put(BUILD_DATE, "(read failed)");
+        }
+    }
+
     public WikiSourceConfig(Map<?, ?> originals) {
         super(configDef(), originals);
     }
@@ -58,6 +76,14 @@ public class WikiSourceConfig extends AbstractConfig {
      */
     public String getTargetTopicConfig() {
         return getString(TARGET_TOPIC_CONFIG);
+    }
+
+    public static String getProjectVersion() {
+        return buildProperties.getProperty(PROJECT_VERSION);
+    }
+
+    public static String getBuildDate() {
+        return buildProperties.getProperty(BUILD_DATE);
     }
 
     /**

@@ -17,3 +17,7 @@ update-config:
 .PHONY: list-status
 list-status:
 	curl localhost:8082/connectors/wikipedia-source-connector | jq
+
+.PHONY: list-plugins
+list-plugins:
+	curl localhost:8082/connector-plugins | jq

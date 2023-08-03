@@ -2,9 +2,12 @@ package org.tonvanbart.wikipedia.connect;
 
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
+import javax.ws.rs.RuntimeType;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.WebTarget;
@@ -12,6 +15,7 @@ import javax.ws.rs.sse.InboundSseEvent;
 import javax.ws.rs.sse.SseEventSource;
 
 import lombok.extern.slf4j.Slf4j;
+import org.apache.cxf.jaxrs.impl.ConfigurationImpl;
 
 @Slf4j
 public class WikiSourceEventHandler implements Consumer<InboundSseEvent> {
@@ -21,15 +25,20 @@ public class WikiSourceEventHandler implements Consumer<InboundSseEvent> {
     private final SseEventSource eventSource;
 
     public WikiSourceEventHandler() {
+        log.debug("enter WikiSourceEventHandler constructor");
         eventSource = createEventSource();
         eventSource.register(this);
     }
 
     public void start() {
+        log.info("start()");
+        log.info("before open(), isOpen() is {}", eventSource.isOpen());
         eventSource.open();
+        log.info("after open(), isOpen() is {}", eventSource.isOpen());
     }
 
     public void stop() {
+        log.info("stop()");
         eventSource.close();
     }
 
@@ -56,9 +65,15 @@ public class WikiSourceEventHandler implements Consumer<InboundSseEvent> {
      * @return
      */
     SseEventSource createEventSource() {
-        log.debug("createEventSource()");
-        Client client = ClientBuilder.newClient();
+        log.info("createEventSource()");
+//        ConfigurationImpl configuration = new ConfigurationImpl(RuntimeType.CLIENT);
+//        configuration.setProperty("scheduledExecutorService", Executors.newScheduledThreadPool(2));
+//        Client client = ClientBuilder.newClient(configuration);
+        Client client = ClientBuilder.newBuilder().newClient();
         WebTarget webTarget = client.target(EDIT_STREAM_URL);
-        return SseEventSource.target(webTarget).build();
+        SseEventSource.Builder builder = SseEventSource.target(webTarget);
+        log.info("builder is a " + builder.getClass().getName());
+        builder = builder.reconnectingEvery(1, TimeUnit.SECONDS);
+        return builder.build();
     }
 }

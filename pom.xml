@@ -17,6 +17,10 @@
         <mockito.version>3.5.7</mockito.version>
         <junit.jupiter.version>5.7.0</junit.jupiter.version>
         <cxf-version>3.5.1</cxf-version>
+
+        <timestamp>${maven.build.timestamp}</timestamp>
+        <maven.build.timestamp.format>yyyy-MM-dd HH:mm:ss</maven.build.timestamp.format>
+
     </properties>
 
     <dependencies>
@@ -99,6 +103,13 @@
     </dependencies>
 
     <build>
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>true</filtering>
+            </resource>
+        </resources>
+
         <plugins>
             <!-- build jar with dependencies -->
             <plugin>
