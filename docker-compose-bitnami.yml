@@ -35,6 +35,7 @@ services:
       - broker
     ports:
       - 9001:9001
+      - 5005:5005
     volumes:
       - ./plugin-jars:/plugins
       - ./connect/config:/config
@@ -42,7 +43,7 @@ services:
     entrypoint: [ "connect-distributed.sh", "/config/worker.properties" ]
     environment:
       KAFKA_HEAP_OPTS: "-Xmx1G -Xms1G"
-      KAFKA_OPTS: "-Dlog4j.configuration=file:/data/log4j.properties"
+      KAFKA_OPTS: "-Dlog4j.configuration=file:/data/log4j.properties -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005"
       EXTRA_ARGS: "-Dorg.apache.cxf.logger=org.apache.cxf.common.logging.Slf4jLogger"
 
 #  kafka-ui:
