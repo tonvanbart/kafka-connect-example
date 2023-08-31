@@ -49,7 +49,7 @@ class WikiSourceTaskTest {
         log.info("sourceRecords.size() = {}", sourceRecords.size());
         assertTrue(sourceRecords.size() > 0, "There should be some sourcerecords");
         wikiSourceTask.stop();
-//        sourceRecords.forEach(System.out::println);
+        sourceRecords.forEach(System.out::println);
     }
 
 }

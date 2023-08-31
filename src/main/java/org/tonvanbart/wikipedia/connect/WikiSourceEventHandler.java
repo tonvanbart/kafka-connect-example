@@ -44,7 +44,7 @@ public class WikiSourceEventHandler implements Consumer<InboundSseEvent> {
 
     @Override
     public void accept(InboundSseEvent inboundEvent) {
-        log.info("handleEvent({})", inboundEvent.getName());
+        log.debug("handleEvent({})", inboundEvent.getName());
         try {
             if ("message".equals(inboundEvent.getName())) {
                 incomingEvents.put(inboundEvent.readData());
@@ -65,14 +65,14 @@ public class WikiSourceEventHandler implements Consumer<InboundSseEvent> {
      * @return
      */
     SseEventSource createEventSource() {
-        log.info("createEventSource()");
-//        ConfigurationImpl configuration = new ConfigurationImpl(RuntimeType.CLIENT);
-//        configuration.setProperty("scheduledExecutorService", Executors.newScheduledThreadPool(2));
-//        Client client = ClientBuilder.newClient(configuration);
-        Client client = ClientBuilder.newBuilder().newClient();
+        log.debug("createEventSource()");
+        ConfigurationImpl configuration = new ConfigurationImpl(RuntimeType.CLIENT);
+        configuration.setProperty("scheduledExecutorService", Executors.newScheduledThreadPool(2));
+        Client client = ClientBuilder.newClient(configuration);
+//        Client client = ClientBuilder.newBuilder().newClient();
         WebTarget webTarget = client.target(EDIT_STREAM_URL);
         SseEventSource.Builder builder = SseEventSource.target(webTarget);
-        log.info("builder is a " + builder.getClass().getName());
+        log.debug("builder is a {}", builder.getClass().getName());
         builder = builder.reconnectingEvery(1, TimeUnit.SECONDS);
         return builder.build();
     }
