@@ -4,6 +4,9 @@
     "connector.class": "org.tonvanbart.wikipedia.connect.WikiSourceConnector",
     "tasks.max": "1",
     "wiki.language": "nl",
-    "target.topic": "wikipedia_edits"
+    "target.topic": "wikipedia_edits",
+    "key.converter": "org.apache.kafka.connect.storage.StringConverter",
+    "value.converter": "org.apache.kafka.connect.storage.StringConverter",
+    "header.converter": "org.apache.kafka.connect.storage.StringConverter"
   }
 }

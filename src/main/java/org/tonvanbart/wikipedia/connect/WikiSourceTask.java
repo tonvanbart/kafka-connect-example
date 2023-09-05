@@ -6,105 +6,112 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.kafka.common.KafkaException;
 import org.apache.kafka.connect.data.Schema;
 import org.apache.kafka.connect.source.SourceRecord;
 import org.apache.kafka.connect.source.SourceTask;
 import org.tonvanbart.wikipedia.eventstream.EditEvent;
 
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
-import javax.ws.rs.client.WebTarget;
-import javax.ws.rs.sse.InboundSseEvent;
-import javax.ws.rs.sse.SseEventSource;
+import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.util.*;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
-/**
- * The task contains the actual logic to handle records coming in from Wikipedia.
- */
 @Slf4j
 public class WikiSourceTask extends SourceTask {
-
-    private WikiSourceConfig config;
 
     private String languageToSelect;
 
     private String outputTopic;
 
+    private final BlockingQueue<String> incomingEvents = new LinkedBlockingQueue<>();
+
     private ObjectMapper objectMapper;
+
+    private long lastPoll = 0L;
+
+    private Thread sseThread;
 
     public static final String TASK_ID = "task.id";
 
-    private final AtomicBoolean isRunning = new AtomicBoolean(false);
-
-    private final AtomicLong taskThreadId = new AtomicLong(0);
-
-    private final AtomicLong lastPoll = new AtomicLong(0);
-
-    private WikiSourceEventHandler eventHandler; // = new WikiSourceEventHandler();
+    @Override
+    public String version() {
+        log.debug("version()");
+        return WikiSourceConfig.getVersionAndDate();
+    }
 
     @Override
-    public void start(Map<String, String> props) {
-        log.info("start({})", props);
-        config = new WikiSourceConfig(props);
+    public void start(Map<String, String> configProps) {
+        log.debug("start({})", configProps);
+        var wikiSourceConfig = new WikiSourceConfig(configProps);
+        languageToSelect = wikiSourceConfig.getWikiLanguageConfig();
+        outputTopic = wikiSourceConfig.getTargetTopicConfig();
         objectMapper = new ObjectMapper();
-        languageToSelect = config.getWikiLanguageConfig();
-        outputTopic = config.getTargetTopicConfig();
+        sseThread = new Thread(this::runSse);
+        sseThread.start();
+    }
 
-        eventHandler = new WikiSourceEventHandler();
-        eventHandler.start();
-        isRunning.set(true);
-        taskThreadId.set(Thread.currentThread().getId());
+    private void runSse() {
+        Stream<String> sseEvents = null;
+        try {
+            var uri = new URI("https://stream.wikimedia.org/v2/stream/recentchange");
+            var httpClient = HttpClient.newHttpClient();
+            var httpRequest = HttpRequest.newBuilder(uri).GET().build();
+            sseEvents = httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofLines()).body();
+            log.debug("got an SSE event stream");
+            sseEvents.filter(line -> line.startsWith("data: "))
+                    .map(line -> line.substring("data: ".length()))
+                    .forEach(incomingEvents::offer);
+
+        } catch (URISyntaxException | IOException e) {
+            log.error("Source task failed to start", e);
+            throw new KafkaException(e);
+        } catch (InterruptedException e) {
+            log.warn("SSE thread interrupt", e);
+            if (sseEvents != null) {
+                sseEvents.close();
+            }
+            Thread.currentThread().interrupt();;
+        }
+//        if (sseEvents != null) {
+//            log.debug("got an SSE event stream");
+//            sseEvents.filter(line -> line.startsWith("data: "))
+//                    .map(line -> line.substring("data: ".length()))
+//                    .forEach(incomingEvents::offer);
+//        }
     }
 
     @Override
     public List<SourceRecord> poll() throws InterruptedException {
-        log.debug("poll() - isRunning = {}", isRunning.get());
-        if (isRunning.get()) {
-            long nextPoll = lastPoll.longValue() + 3000;
-            long now = System.currentTimeMillis();
-            long sleepInterval = Math.min(nextPoll - now, 3000);
-            if (sleepInterval > 0) {
-                log.info("Pausing {} ms until next poll", sleepInterval);
-                try {
-                    Thread.sleep(sleepInterval);
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                }
-            }
-            lastPoll.set(System.currentTimeMillis());
-            List<String> eventsToSend = new ArrayList<>();
-            eventHandler.drainTo(eventsToSend);
-            log.debug("processing {} events", eventsToSend.size());
-            return eventsToSend.stream()
-                    .map(this::convertToSourceRecord)
-                    .filter(Optional::isPresent)
-                    .map(Optional::get)
-                    .collect(Collectors.toList());
-        } else {
-            log.info("Closing resources");
-            eventHandler.stop();
-            return null;
+        var now = System.currentTimeMillis();
+        if (now - lastPoll < 1000) {
+            // give the event thread a second to get some events
+            return Collections.emptyList();
         }
+        log.debug("poll()");
+        lastPoll = now;
+        List<String> linesToSend = new ArrayList<>();
+        incomingEvents.drainTo(linesToSend);
+        log.debug("Got {} lines", linesToSend.size());
+        return linesToSend.stream()
+                .map(this::convertToSourceRecord)
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .collect(Collectors.toList());
     }
 
     @Override
     public void stop() {
-        log.info("stop()");
-        isRunning.set(false);
-        if (taskThreadId.longValue() == Thread.currentThread().getId()) {
-            eventHandler.stop();
+        if (sseThread != null) {
+            sseThread.interrupt();
         }
-    }
-
-    @Override
-    public String version() {
-        // TODO get from Maven POM.
-        return "0.0.1";
     }
 
     private Optional<SourceRecord> convertToSourceRecord(String editEventJson) {
@@ -152,6 +159,7 @@ public class WikiSourceTask extends SourceTask {
         }
     }
 
+
     /**
      * Class for JSON payload generation.
      */
@@ -163,4 +171,5 @@ public class WikiSourceTask extends SourceTask {
         private String comment;
 
     }
+
 }

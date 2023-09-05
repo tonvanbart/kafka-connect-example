@@ -25,13 +25,13 @@ public class WikiSourceConnector extends SourceConnector {
 
     @Override
     public Class<? extends Task> taskClass() {
-        log.debug("taskClass()");
-        return WikiSourceTaskPlain.class;
+        log.info("taskClass()");
+        return WikiSourceTask.class;
     }
 
     @Override
     public List<Map<String, String>> taskConfigs(int maxTasks) {
-        log.debug("taskConfigs({})", maxTasks);
+        log.info("taskConfigs({})", maxTasks);
         return IntStream.range(0, maxTasks)
                 .mapToObj(this::createTaskConfig)
                 .collect(Collectors.toList());
@@ -39,7 +39,7 @@ public class WikiSourceConnector extends SourceConnector {
 
     @Override
     public void stop() {
-        log.debug("stop()");
+        log.info("stop()");
     }
 
     @Override
@@ -49,7 +49,7 @@ public class WikiSourceConnector extends SourceConnector {
 
     @Override
     public String version() {
-        return WikiSourceConfig.getProjectVersion() + " built:" + WikiSourceConfig.getBuildDate();
+        return WikiSourceConfig.getVersionAndDate();
     }
 
     private Map<String, String> createTaskConfig(int taskNumber) {

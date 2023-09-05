@@ -17,5 +17,6 @@ public class EditEvent {
 
     private String title;
 
+    private Boolean bot;
 
 }

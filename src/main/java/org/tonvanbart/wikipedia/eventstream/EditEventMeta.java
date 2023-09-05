@@ -7,6 +7,8 @@ import lombok.Data;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class EditEventMeta {
 
+    private String uri;
+
     private String domain;
 
     private String topic;

@@ -1,15 +1,12 @@
 package org.tonvanbart.wikipedia.connect;
 
+import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.connect.source.SourceRecord;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import javax.ws.rs.sse.InboundSseEvent;
-import javax.ws.rs.sse.SseEventSource;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -18,9 +15,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Stream;
-
-import lombok.extern.slf4j.Slf4j;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -28,12 +22,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @Slf4j
 @ExtendWith(MockitoExtension.class)
 class WikiSourceTaskTest {
-
-    @Mock
-    private SseEventSource eventSource;
-
-    @Mock
-    private InboundSseEvent inboundEvent;
 
     private WikiSourceTask wikiSourceTask;
 
@@ -61,7 +49,6 @@ class WikiSourceTaskTest {
     @Test
     void testPlainJavaClient() throws Exception {
         try {
-
             var uri = new URI("https://stream.wikimedia.org/v2/stream/recentchange");
             var httpClient = HttpClient.newHttpClient();
             var httpRequest = HttpRequest.newBuilder(uri).GET().build();
@@ -73,7 +60,7 @@ class WikiSourceTaskTest {
                     .map(line -> line.substring("data: ".length()))
                     .forEach(System.out::println);
         } finally {
-            System.out.println("---\nwraping up...\n---");
+            System.out.println("---\nwrapping up...\n---");
         }
 //        lines.close();
     }
