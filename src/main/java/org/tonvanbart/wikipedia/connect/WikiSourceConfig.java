@@ -86,6 +86,10 @@ public class WikiSourceConfig extends AbstractConfig {
         return buildProperties.getProperty(BUILD_DATE);
     }
 
+    public static String getVersionAndDate() {
+        return String.format("%s built: %s", getProjectVersion(), getBuildDate());
+    }
+
     /**
      * Example Validator implementation for the wiki language code.
      */

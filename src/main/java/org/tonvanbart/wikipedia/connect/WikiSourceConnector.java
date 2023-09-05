@@ -26,7 +26,7 @@ public class WikiSourceConnector extends SourceConnector {
     @Override
     public Class<? extends Task> taskClass() {
         log.debug("taskClass()");
-        return WikiSourceTask.class;
+        return WikiSourceTaskPlain.class;
     }
 
     @Override

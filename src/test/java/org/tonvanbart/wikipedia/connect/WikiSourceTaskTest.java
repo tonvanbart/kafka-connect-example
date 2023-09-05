@@ -10,9 +10,15 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import javax.ws.rs.sse.InboundSseEvent;
 import javax.ws.rs.sse.SseEventSource;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -50,6 +56,26 @@ class WikiSourceTaskTest {
         assertTrue(sourceRecords.size() > 0, "There should be some sourcerecords");
         wikiSourceTask.stop();
         sourceRecords.forEach(System.out::println);
+    }
+
+    @Test
+    void testPlainJavaClient() throws Exception {
+        try {
+
+            var uri = new URI("https://stream.wikimedia.org/v2/stream/recentchange");
+            var httpClient = HttpClient.newHttpClient();
+            var httpRequest = HttpRequest.newBuilder(uri).GET().build();
+            var lines = httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofLines()).body();
+//        lines.forEach(System.out::println);
+            lines.map(line -> line.split("\n"))
+                    .flatMap(linearr -> Arrays.stream(linearr))
+                    .filter(line -> line.startsWith("data: "))
+                    .map(line -> line.substring("data: ".length()))
+                    .forEach(System.out::println);
+        } finally {
+            System.out.println("---\nwraping up...\n---");
+        }
+//        lines.close();
     }
 
 }

@@ -27,14 +27,14 @@ public class WikiSourceEventHandler implements Consumer<InboundSseEvent> {
     public WikiSourceEventHandler() {
         log.debug("enter WikiSourceEventHandler constructor");
         eventSource = createEventSource();
-        eventSource.register(this);
+//        eventSource.register(this);
     }
 
     public void start() {
         log.info("start()");
-        log.info("before open(), isOpen() is {}", eventSource.isOpen());
-        eventSource.open();
-        log.info("after open(), isOpen() is {}", eventSource.isOpen());
+//        log.info("before open(), isOpen() is {}", eventSource.isOpen());
+//        eventSource.open();
+//        log.info("after open(), isOpen() is {}", eventSource.isOpen());
     }
 
     public void stop() {
@@ -66,14 +66,22 @@ public class WikiSourceEventHandler implements Consumer<InboundSseEvent> {
      */
     SseEventSource createEventSource() {
         log.debug("createEventSource()");
-        ConfigurationImpl configuration = new ConfigurationImpl(RuntimeType.CLIENT);
-        configuration.setProperty("scheduledExecutorService", Executors.newScheduledThreadPool(2));
-        Client client = ClientBuilder.newClient(configuration);
+//        ConfigurationImpl configuration = new ConfigurationImpl(RuntimeType.CLIENT);
+//        configuration.setProperty("scheduledExecutorService", Executors.newScheduledThreadPool(2));
+//        Client client = ClientBuilder.newClient(configuration);
 //        Client client = ClientBuilder.newBuilder().newClient();
+        Client client = ClientBuilder.newClient();
         WebTarget webTarget = client.target(EDIT_STREAM_URL);
-        SseEventSource.Builder builder = SseEventSource.target(webTarget);
-        log.debug("builder is a {}", builder.getClass().getName());
-        builder = builder.reconnectingEvery(1, TimeUnit.SECONDS);
-        return builder.build();
+//        SseEventSource.Builder builder = SseEventSource.target(webTarget);
+//        log.debug("builder is a {}", builder.getClass().getName());
+//        builder = builder.reconnectingEvery(1, TimeUnit.SECONDS);
+//        return builder.build();
+
+
+        SseEventSource sseEventSource = SseEventSource.target(webTarget).build();
+        sseEventSource.register(this);
+        sseEventSource.open();
+        log.debug("end of createEventSource, isOpen={}", sseEventSource.isOpen());
+        return sseEventSource;
     }
 }
