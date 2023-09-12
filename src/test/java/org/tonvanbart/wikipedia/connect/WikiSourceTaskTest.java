@@ -38,7 +38,7 @@ class WikiSourceTaskTest {
         props.put("wiki.language", "en");
         props.put("target.topic", "en-edits");
         wikiSourceTask.start(props);
-        Thread.sleep(4000);
+        Thread.sleep(2000);
         List<SourceRecord> sourceRecords = wikiSourceTask.poll();
         log.info("sourceRecords.size() = {}", sourceRecords.size());
         assertTrue(sourceRecords.size() > 0, "There should be some sourcerecords");

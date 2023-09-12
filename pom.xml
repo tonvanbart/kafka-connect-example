@@ -16,6 +16,7 @@
         <slf4j-simple.version>1.7.30</slf4j-simple.version>
         <mockito.version>3.5.7</mockito.version>
         <junit.jupiter.version>5.7.0</junit.jupiter.version>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
         <timestamp>${maven.build.timestamp}</timestamp>
         <maven.build.timestamp.format>yyyy-MM-dd HH:mm:ss</maven.build.timestamp.format>

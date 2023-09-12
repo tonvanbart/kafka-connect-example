@@ -78,20 +78,14 @@ public class WikiSourceTask extends SourceTask {
             if (sseEvents != null) {
                 sseEvents.close();
             }
-            Thread.currentThread().interrupt();;
+            Thread.currentThread().interrupt();
         }
-//        if (sseEvents != null) {
-//            log.debug("got an SSE event stream");
-//            sseEvents.filter(line -> line.startsWith("data: "))
-//                    .map(line -> line.substring("data: ".length()))
-//                    .forEach(incomingEvents::offer);
-//        }
     }
 
     @Override
     public List<SourceRecord> poll() throws InterruptedException {
         var now = System.currentTimeMillis();
-        if (now - lastPoll < 1000) {
+        if (now - lastPoll < 100) {
             // give the event thread a second to get some events
             return Collections.emptyList();
         }
@@ -119,7 +113,7 @@ public class WikiSourceTask extends SourceTask {
             EditEvent editEvent = objectMapper.readValue(editEventJson, EditEvent.class);
             log.debug("Got an event for {}", editEvent.getMeta().getDomain());
             if (editEvent.getMeta().getDomain().startsWith(languageToSelect)) {
-                log.debug("select event for forwarding");
+                log.debug("select event for forwarding\n{}", editEvent);
                 SourceRecord sourceRecord = sourcerecord()
                         .topic(editEvent.getMeta().getTopic())
                         .partition(editEvent.getMeta().getPartition())
@@ -128,6 +122,9 @@ public class WikiSourceTask extends SourceTask {
                         .user(editEvent.getUser())
                         .title(editEvent.getTitle())
                         .comment(editEvent.getComment())
+                        .bot(editEvent.getBot())
+                        .sizeOld(editEvent.oldLength())
+                        .sizeNew(editEvent.newLength())
                         .build();
                 return Optional.ofNullable(sourceRecord);
             } else {
@@ -140,7 +137,7 @@ public class WikiSourceTask extends SourceTask {
     }
 
     @Builder(builderMethodName = "sourcerecord")
-    private SourceRecord buildSourceRecord(String topic, Integer partition, String domain, Long offset, String user, String title, String comment) {
+    private SourceRecord buildSourceRecord(String topic, Integer partition, String domain, Long offset, String user, String title, String comment, boolean bot, Integer sizeOld, Integer sizeNew) {
         Map<String, Object> sourcePartition = new HashMap<>();
         sourcePartition.put("topic", topic);
         sourcePartition.put("partition", partition);
@@ -151,7 +148,7 @@ public class WikiSourceTask extends SourceTask {
 
         ObjectMapper mapper = new ObjectMapper();
         try {
-            String payload = mapper.writeValueAsString(new Payload(user, title, comment));
+            String payload = mapper.writeValueAsString(new Payload(bot, sizeOld, sizeNew, user, title, comment));
             return new SourceRecord(sourcePartition, sourceOffset, outputTopic, Schema.STRING_SCHEMA, payload);
         } catch (JsonProcessingException e) {
             log.error("Failed to generate payload, skipping record");
@@ -166,6 +163,9 @@ public class WikiSourceTask extends SourceTask {
     @Data
     @AllArgsConstructor
     private static class Payload {
+        private Boolean bot;
+        private Integer sizeOld;
+        private Integer sizeNew;
         private String user;
         private String title;
         private String comment;
