@@ -55,7 +55,7 @@ class WikiSourceTaskTest {
             var lines = httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofLines()).body();
 //        lines.forEach(System.out::println);
             lines.map(line -> line.split("\n"))
-                    .flatMap(linearr -> Arrays.stream(linearr))
+                    .flatMap(Arrays::stream)
                     .filter(line -> line.startsWith("data: "))
                     .map(line -> line.substring("data: ".length()))
                     .forEach(System.out::println);

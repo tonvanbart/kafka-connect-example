@@ -17,4 +17,6 @@ public class EditEventMeta {
 
     private long offset;
 
+    private String dt;
+
 }
