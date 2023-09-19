@@ -22,12 +22,12 @@ Instructions in telegram style:
    ```
 3. Verify that the connect plugin is found, in another terminal
    ```shell
-    curl localhost:8082/connector-plugins | jq
+    curl localhost:9001/connector-plugins | jq
    ```
    You should see `org.tonvanbart.wikipedia.connect.WikiSourceConnector` among the listed classes.
 4. Try to create the connector
    ```shell
-   curl -X POST -H "Content-Type: application/json" -d @src/test/resources/add-source-connector.json localhost:8082/connectors | jq
+   curl -X POST -H "Content-Type: application/json" -d @src/test/resources/add-source-connector.json localhost:9001/connectors | jq
    ```
    
 #### Makefile targets
