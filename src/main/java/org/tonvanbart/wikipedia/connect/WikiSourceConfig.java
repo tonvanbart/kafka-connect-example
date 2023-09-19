@@ -47,7 +47,7 @@ public class WikiSourceConfig extends AbstractConfig {
 
     static final String BUILD_DATE = "build.date";
 
-    static Properties buildProperties = new Properties();
+    static final Properties buildProperties = new Properties();
 
     static {
         try (final InputStream in = WikiSourceConfig.class.getClassLoader().getResourceAsStream("version.properties")) {

@@ -1,68 +1,59 @@
-# Sets up two Kafka Clusters, each with one broker and a Connect cluster with one node.
-# No SSL/SASL is used, auto create topics is enabled and everyone hos access to resources if no ACLS are used
-# Kafka broker  : Internal port  : 19092
-#                 Forwarded port : 9092
-# Connect node  : Internal port  : 8082
-#                 Forwarded port : 8082
----
-version: '2'
+version: '3.1'
+
 services:
   zookeeper:
-    image: confluentinc/cp-zookeeper:6.2.1
+    image: zookeeper:3.6.2
     hostname: zookeeper
-    container_name: local-zookeeper
-    ports:
-      - "2181:2181"
+    container_name: bitzookeeper
+    restart: always
     environment:
-      ZOOKEEPER_CLIENT_PORT: 2181
-      ZOOKEEPER_TICK_TIME: 2000
+      ZOO_TICK_TIME: "2000"
+      ZOO_STANDALONE_ENABLED: "true"
 
   broker:
-    image: confluentinc/cp-kafka:6.2.1
-    hostname: local-broker
-    container_name: broker
+    image: bitnami/kafka:3.4.0
+    hostname: kafka-broker-1
+    container_name: bitbroker
+    restart: always
     depends_on:
       - zookeeper
     ports:
       - "9092:9092"
+    volumes:
+      - ./broker/config:/config
+    entrypoint: [ "kafka-server-start.sh", "/config/broker-1.properties" ]
     environment:
-      KAFKA_BROKER_ID: 1
-      KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181/localCluster'
-      KAFKA_ADVERTISED_LISTENERS: 'INNER://local-broker:19092,OUTER://localhost:9092'
-      KAFKA_LISTENERS: 'INNER://local-broker:19092,OUTER://local-broker:9092'
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: 'INNER:PLAINTEXT,OUTER:PLAINTEXT'
-      KAFKA_INTER_BROKER_LISTENER_NAME: INNER
-      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
-      KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'true'
-      KAFKA_MIN_INSYNC_REPLICAS: 1
-      KAFKA_NUM_PARTITIONS: 1
-      KAFKA_ALLOW_EVERYONE_IF_NO_ACL_FOUND: 'true'
+      KAFKA_HEAP_OPTS: "-Xmx1G -Xms1G"
 
   connect:
-    image: confluentinc/cp-kafka-connect:6.2.1
-    hostname: connect
-    container_name: local-connect
+    image: bitnami/kafka:3.4.0
+#    build: connect-build
+    hostname: kafka-connect-1
+    container_name: bitconnect
+    restart: always
     depends_on:
       - broker
+    ports:
+      - "9001:9001"
+      - "5005:5005"
     volumes:
       - ./plugin-jars:/plugins
-    ports:
-      - "8082:8082"
+      - ./connect/config:/config
+      - ./connect/data:/data
+    entrypoint: [ "connect-distributed.sh", "/config/worker.properties" ]
     environment:
-      CONNECT_BOOTSTRAP_SERVERS: 'local-broker:19092'
-      CONNECT_REST_PORT: '8082'
-      CONNECT_GROUP_ID: 'connect-quickstart'
-      CONNECT_CONFIG_STORAGE_TOPIC: 'connect-quickstart-config'
-      CONNECT_CONFIG_STORAGE_REPLICATION_FACTOR: 1
-      CONNECT_OFFSET_STORAGE_TOPIC: 'connect-quickstart-offsets'
-      CONNECT_OFFSET_STORAGE_REPLICATION_FACTOR: 1
-      CONNECT_STATUS_STORAGE_TOPIC: 'connect-quickstart-status'
-      CONNECT_STATUS_STORAGE_REPLICATION_FACTOR: 1
-      CONNECT_KEY_CONVERTER: 'org.apache.kafka.connect.json.JsonConverter'
-      CONNECT_VALUE_CONVERTER: 'org.apache.kafka.connect.json.JsonConverter'
-      CONNECT_INTERNAL_KEY_CONVERTER: 'org.apache.kafka.connect.json.JsonConverter'
-      CONNECT_INTERNAL_VALUE_CONVERTER: 'org.apache.kafka.connect.json.JsonConverter'
-      CONNECT_REST_ADVERTISED_HOST_NAME: 'localhost'
-      CONNECT_PLUGIN_PATH: '/plugins'
+      KAFKA_HEAP_OPTS: "-Xmx1G -Xms1G"
+      KAFKA_OPTS: "-Dlog4j.configuration=file:/data/log4j.properties -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005"
+      EXTRA_ARGS: "-Dorg.apache.cxf.logger=org.apache.cxf.common.logging.Slf4jLogger"
+
+#  kafka-ui:
+#    image: quay.io/cloudhut/kowl:master
+#    container_name: kowl
+#    restart: always
+#    ports:
+#      - 8080:8080
+#    volumes:
+#      - ./kafka-ui:/config
+#    environment:
+#      CONFIG_FILEPATH: "/config/kafka-ui-config.yaml"
 

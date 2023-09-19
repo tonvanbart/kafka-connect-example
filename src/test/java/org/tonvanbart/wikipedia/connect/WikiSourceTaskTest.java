@@ -41,7 +41,7 @@ class WikiSourceTaskTest {
         Thread.sleep(2000);
         List<SourceRecord> sourceRecords = wikiSourceTask.poll();
         log.info("sourceRecords.size() = {}", sourceRecords.size());
-        assertTrue(sourceRecords.size() > 0, "There should be some sourcerecords");
+        assertTrue(!sourceRecords.isEmpty(), "There should be some sourcerecords");
         wikiSourceTask.stop();
         sourceRecords.forEach(System.out::println);
     }

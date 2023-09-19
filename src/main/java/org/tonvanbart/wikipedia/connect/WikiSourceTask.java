@@ -75,15 +75,12 @@ public class WikiSourceTask extends SourceTask {
             throw new KafkaException(e);
         } catch (InterruptedException e) {
             log.warn("SSE thread interrupt", e);
-            if (sseEvents != null) {
-                sseEvents.close();
-            }
             Thread.currentThread().interrupt();
         }
     }
 
     @Override
-    public List<SourceRecord> poll() throws InterruptedException {
+    public List<SourceRecord> poll() {
         var now = System.currentTimeMillis();
         if (now - lastPoll < 100) {
             // give the event thread a second to get some events
