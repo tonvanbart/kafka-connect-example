@@ -29,9 +29,41 @@ Instructions in telegram style:
    ```shell
    curl -X POST -H "Content-Type: application/json" -d @src/test/resources/add-source-connector.json localhost:9001/connectors | jq
    ```
-   
+5. Check if messages are produced; updates to be published will be logged at DEBUG level in the `bitconnect` container log:
+   ```shell
+   docker logs bitconnect -f 
+   ```
+   You can use `kafkacat` (`kcat`) to check the topic:
+   ```shell
+   kafkacat -b localhost:9092 -C -t wikipedia_edits
+   ```
+  
+#### Kafka message format
+Messages produced to Kafka are JSON formatted and contain the old and new page size (note: can be 0 in some cases), 
+the username of the editing user, Wikipedia page title and edit comment and an indication if the user is a bot.
+<br>
+See example payload below:
+```json
+{
+  "bot": false,
+  "sizeOld": 5139,
+  "sizeNew": 5163,
+  "timestamp": "2023-09-19T21:43:55Z",
+  "user": "Guss",
+  "title": "Gebruiker:Guss/Kladblok",
+  "comment": "/* Ontspoorde vriendschap / Beschuldiging van misbruik (titel??) */Stijl"
+}
+```
+#### Configuration
+The wiki language to follow, and topic to produce to can be configured. 
+
+| property | meaning | default |
+|----------|---------|---------|
+| `wiki.language` | Two letter language code of the wiki to follow | `nl` |
+| `target.topic` | Topic where wiki edits are produced to | _none_ |
+
 #### Makefile targets
-For convenience, there is a Makefile which can perform some tasks:
+For convenience, there is a Makefile which can perform some of the `curl` commands for you:
 
 | Command | result |
 |---------|--------|
