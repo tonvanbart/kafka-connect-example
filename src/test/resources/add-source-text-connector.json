@@ -1,0 +1,19 @@
+{
+  "name": "wikipedia-source-connector",
+  "config": {
+    "connector.class": "org.tonvanbart.wikipedia.connect.WikiSourceTextConnector",
+    "tasks.max": "1",
+    "wiki.language": "nl",
+    "target.topic": "wikipedia_texts",
+    "key.converter": "org.apache.kafka.connect.storage.StringConverter",
+    "value.converter": "org.apache.kafka.connect.storage.StringConverter",
+    "header.converter": "org.apache.kafka.connect.storage.StringConverter",
+
+    "transforms": "Filter",
+    "transforms.Filter.type": "org.apache.kafka.connect.transforms.Filter",
+    "transforms.Filter.predicate": "isData",
+    "predicates": "isData",
+    "predicates.isData.type": "org.tonvanbart.wikipedia.connect.PrefixPredicate",
+    "predicates.isData.filter.prefix": "data: "
+  }
+}
