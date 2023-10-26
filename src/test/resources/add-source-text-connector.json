@@ -9,11 +9,12 @@
     "value.converter": "org.apache.kafka.connect.storage.StringConverter",
     "header.converter": "org.apache.kafka.connect.storage.StringConverter",
 
-    "transforms": "Filter",
+    "transforms": "Filter,Transform",
     "transforms.Filter.type": "org.apache.kafka.connect.transforms.Filter",
     "transforms.Filter.predicate": "isData",
     "predicates": "isData",
     "predicates.isData.type": "org.tonvanbart.wikipedia.connect.PrefixPredicate",
-    "predicates.isData.filter.prefix": "data: "
+    "predicates.isData.filter.prefix": "data: ",
+    "transforms.Transform.type": "org.tonvanbart.wikipedia.connect.AvroTransform"
   }
 }
