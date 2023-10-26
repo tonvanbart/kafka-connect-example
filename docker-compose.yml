@@ -46,14 +46,25 @@ services:
       KAFKA_OPTS: "-Dlog4j.configuration=file:/data/log4j.properties -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005"
       EXTRA_ARGS: "-Dorg.apache.cxf.logger=org.apache.cxf.common.logging.Slf4jLogger"
 
-#  kafka-ui:
-#    image: quay.io/cloudhut/kowl:master
-#    container_name: kowl
-#    restart: always
-#    ports:
-#      - 8080:8080
-#    volumes:
-#      - ./kafka-ui:/config
-#    environment:
-#      CONFIG_FILEPATH: "/config/kafka-ui-config.yaml"
+  schemaregistry:
+    image: bitnami/schema-registry:7.5
+    container_name: bitregistry
+    ports:
+      - '8081:8081'
+    depends_on:
+      - broker
+    environment:
+      - SCHEMA_REGISTRY_LISTENERS=http://0.0.0.0:8081
+      - SCHEMA_REGISTRY_KAFKA_BROKERS=PLAINTEXT://kafka-broker-1:9091
+
+  kafka-ui:
+    image: quay.io/cloudhut/kowl:master
+    container_name: kowl
+    restart: always
+    ports:
+      - 8080:8080
+    volumes:
+      - ./kafka-ui:/config
+    environment:
+      CONFIG_FILEPATH: "/config/kafka-ui-config.yaml"
 
