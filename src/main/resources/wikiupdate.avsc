@@ -1,0 +1,28 @@
+{
+  "type": "record",
+  "name": "wikiupdate",
+  "fields": [
+    {
+      "name": "bot",
+      "type": "boolean"
+    }, {
+      "name": "sizeOld",
+      "type": "int"
+    }, {
+      "name": "sizeNew",
+      "type": "int"
+    }, {
+      "name": "timestamp",
+      "type": "string"
+    }, {
+      "name": "user",
+      "type": "string"
+    }, {
+      "name": "title",
+      "type": "string"
+    }, {
+      "name": "comment",
+      "type": "string"
+    }
+  ]
+}
