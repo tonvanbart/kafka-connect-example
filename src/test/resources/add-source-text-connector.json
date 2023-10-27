@@ -6,7 +6,8 @@
     "wiki.language": "nl",
     "target.topic": "wikipedia_texts",
     "key.converter": "org.apache.kafka.connect.storage.StringConverter",
-    "value.converter": "org.apache.kafka.connect.storage.StringConverter",
+    "value.converter": "io.confluent.connect.avro.AvroConverter",
+    "value.converter.schema.registry.url": "http://schemaregistry:8081",
     "header.converter": "org.apache.kafka.connect.storage.StringConverter",
 
     "transforms": "Filter,Transform",

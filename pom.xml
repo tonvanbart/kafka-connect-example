@@ -51,6 +51,12 @@
             <artifactId>avro</artifactId>
             <version>1.11.3</version>
         </dependency>
+        <dependency>
+            <groupId>io.confluent</groupId>
+            <artifactId>kafka-connect-avro-converter</artifactId>
+            <version>7.5.1</version>
+        </dependency>
+
 
         <!-- Kafka Test Dependencies -->
         <dependency>

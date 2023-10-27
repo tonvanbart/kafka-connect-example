@@ -7,6 +7,7 @@ import org.apache.kafka.common.config.ConfigDef;
 import org.apache.kafka.connect.connector.ConnectRecord;
 import org.apache.kafka.connect.data.Schema;
 import org.apache.kafka.connect.data.SchemaBuilder;
+import org.apache.kafka.connect.data.Struct;
 import org.apache.kafka.connect.source.SourceRecord;
 import org.apache.kafka.connect.transforms.Transformation;
 import org.tonvanbart.wikipedia.eventstream.EditEvent;
@@ -25,6 +26,7 @@ public class AvroTransform implements Transformation {
     private long index = 0;
 
     private static Schema UPDATE_SCHEMA = SchemaBuilder.struct()
+            .name("org.tonvanbart.wikipedia.connect.WikiUpdate")
             .field("bot", Schema.BOOLEAN_SCHEMA)
             .field("sizeOld", Schema.INT32_SCHEMA)
             .field("sizeNew", Schema.INT32_SCHEMA)
@@ -50,18 +52,19 @@ public class AvroTransform implements Transformation {
         final String json = value.substring("data: ".length());
         try {
             EditEvent editEvent = objectMapper.readValue(json, EditEvent.class);
-            final var wikiUpdate = WikiUpdate.builder().bot(editEvent.getBot())
-                    .timestamp(editEvent.getMeta().getDt())
-                    .sizeNew(editEvent.newLength())
-                    .sizeOld(editEvent.oldLength())
-                    .user(editEvent.getUser())
-                    .comment(editEvent.getComment())
-                    .title(editEvent.getTitle())
-                    .build();
+            Struct wikiUpdateStruct = new Struct(UPDATE_SCHEMA)
+                    .put("bot", editEvent.getBot())
+                    .put("timestamp", editEvent.getMeta().getDt())
+                    .put("sizeNew", editEvent.newLength())
+                    .put("sizeOld", editEvent.oldLength())
+                    .put("user", editEvent.getUser())
+                    .put("comment", editEvent.getComment())
+                    .put("title", editEvent.getTitle());
+
             Map<String, String> sourcePartition = Collections.singletonMap("source", "https://stream.wikimedia.org/v2/stream/recentchange");
             Map<String, Long> sourceOffset = Collections.singletonMap("index", index++);
 
-            return new SourceRecord(sourcePartition, sourceOffset, "wikievents", UPDATE_SCHEMA, wikiUpdate);
+            return new SourceRecord(sourcePartition, sourceOffset, "wikievents", UPDATE_SCHEMA, wikiUpdateStruct);
         } catch (JsonProcessingException e) {
             log.error("Failed to deserialize JSON into EditEvent, skipping", e);
             return null;
