@@ -10,12 +10,20 @@
     "value.converter.schema.registry.url": "http://schemaregistry:8081",
     "header.converter": "org.apache.kafka.connect.storage.StringConverter",
 
-    "transforms": "filterData,toAvro",
-    "transforms.filterData.type": "org.apache.kafka.connect.transforms.Filter",
-    "transforms.filterData.predicate": "isData",
-    "predicates": "isData",
+    "predicates": "isData, languageSelect",
     "predicates.isData.type": "org.tonvanbart.wikipedia.connect.PrefixPredicate",
     "predicates.isData.filter.prefix": "data: ",
+    "predicates.languageSelect.type": "org.tonvanbart.wikipedia.connect.EditEventPredicate",
+    "predicates.languageSelect.select.language": "nl",
+
+    "transforms": "filterData,toEditEvent,filterLanguage,toAvro",
+    "transforms.filterData.type": "org.apache.kafka.connect.transforms.Filter",
+    "transforms.filterData.predicate": "isData",
+
+    "transforms.toEditEvent.type": "org.tonvanbart.wikipedia.connect.EditEventTransform",
+
+    "transforms.filterLanguage.type": "org.apache.kafka.connect.transforms.Filter",
+    "transforms.filterLanguage.predicate": "languageSelect",
 
     "transforms.toAvro.type": "org.tonvanbart.wikipedia.connect.AvroTransform"
   }

@@ -21,8 +21,6 @@ import java.util.Map;
 @Slf4j
 public class AvroTransform implements Transformation {
 
-    private ObjectMapper objectMapper = new ObjectMapper();
-
     private long index = 0;
 
     private static Schema UPDATE_SCHEMA = SchemaBuilder.struct()
@@ -44,31 +42,20 @@ public class AvroTransform implements Transformation {
      */
     @Override
     public ConnectRecord apply(ConnectRecord connectRecord) {
-        final String value = (String) connectRecord.value();
-        if (!value.startsWith("data: ")) {
-            log.error("skipping malformed record: '{}'", value);
-            return null;
-        }
-        final String json = value.substring("data: ".length());
-        try {
-            EditEvent editEvent = objectMapper.readValue(json, EditEvent.class);
-            Struct wikiUpdateStruct = new Struct(UPDATE_SCHEMA)
-                    .put("bot", editEvent.getBot())
-                    .put("timestamp", editEvent.getMeta().getDt())
-                    .put("sizeNew", editEvent.newLength())
-                    .put("sizeOld", editEvent.oldLength())
-                    .put("user", editEvent.getUser())
-                    .put("comment", editEvent.getComment())
-                    .put("title", editEvent.getTitle());
+        final EditEvent editEvent = (EditEvent) connectRecord.value();
+        Struct wikiUpdateStruct = new Struct(UPDATE_SCHEMA)
+                .put("bot", editEvent.getBot())
+                .put("timestamp", editEvent.getMeta().getDt())
+                .put("sizeNew", editEvent.newLength())
+                .put("sizeOld", editEvent.oldLength())
+                .put("user", editEvent.getUser())
+                .put("comment", editEvent.getComment())
+                .put("title", editEvent.getTitle());
 
-            Map<String, String> sourcePartition = Collections.singletonMap("source", "https://stream.wikimedia.org/v2/stream/recentchange");
-            Map<String, Long> sourceOffset = Collections.singletonMap("index", index++);
+        Map<String, String> sourcePartition = Collections.singletonMap("source", "https://stream.wikimedia.org/v2/stream/recentchange");
+        Map<String, Long> sourceOffset = Collections.singletonMap("index", index++);
 
-            return new SourceRecord(sourcePartition, sourceOffset, "wikievents", UPDATE_SCHEMA, wikiUpdateStruct);
-        } catch (JsonProcessingException e) {
-            log.error("Failed to deserialize JSON into EditEvent, skipping", e);
-            return null;
-        }
+        return new SourceRecord(sourcePartition, sourceOffset, "wikievents", UPDATE_SCHEMA, wikiUpdateStruct);
     }
 
     @Override

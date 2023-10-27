@@ -1,4 +1,4 @@
-package org.tonvanbart.wikipedia;
+package org.tonvanbart.wikipedia.connect;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -21,15 +21,14 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class EditEventTransform implements Transformation {
 
-    private final static String DATA_PREFIX =  "data: ";
+    private static final String DATA_PREFIX =  "data: ";
 
     private ObjectMapper objectMapper = new ObjectMapper();
 
     @Override
-    public ConnectRecord apply(ConnectRecord record) {
-        log.debug("apply({})", record);
-        final var schema = record.valueSchema();
-        String value = (String) record.value();
+    public ConnectRecord apply(ConnectRecord connectRecord) {
+        log.debug("apply({})", connectRecord);
+        String value = (String) connectRecord.value();
         if (!value.startsWith(DATA_PREFIX)) {
             // should have been filtered before
             log.warn("Skipping unparseable value: '{}'", value);
@@ -38,7 +37,7 @@ public class EditEventTransform implements Transformation {
         String jsonString = value.substring(DATA_PREFIX.length());
         try {
             EditEvent editEvent = objectMapper.readValue(jsonString, EditEvent.class);
-            return record.newRecord(record.topic(), record.kafkaPartition(), null, record.key(), null, editEvent,System.currentTimeMillis());
+            return connectRecord.newRecord(connectRecord.topic(), connectRecord.kafkaPartition(), null, connectRecord.key(), null, editEvent,System.currentTimeMillis());
         } catch (JsonProcessingException e) {
             log.warn("Failed to parse event, skipping", e);
             return null;
