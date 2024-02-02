@@ -11,7 +11,7 @@ services:
       ZOO_STANDALONE_ENABLED: "true"
 
   broker:
-    image: bitnami/kafka:3.4.0
+    image: bitnami/kafka:3.6.1
     hostname: kafka-broker-1
     container_name: bitbroker
     restart: always
@@ -26,7 +26,7 @@ services:
       KAFKA_HEAP_OPTS: "-Xmx1G -Xms1G"
 
   connect:
-    image: bitnami/kafka:3.4.0
+    image: bitnami/kafka:3.6.1
 #    build: connect-build
     hostname: kafka-connect-1
     container_name: bitconnect
