@@ -7,6 +7,11 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.common.KafkaException;
+import org.apache.kafka.common.MetricName;
+import org.apache.kafka.common.metrics.*;
+import org.apache.kafka.common.metrics.stats.CumulativeSum;
+import org.apache.kafka.common.metrics.stats.Value;
+import org.apache.kafka.common.utils.Time;
 import org.apache.kafka.connect.data.Schema;
 import org.apache.kafka.connect.source.SourceRecord;
 import org.apache.kafka.connect.source.SourceTask;
@@ -21,6 +26,7 @@ import java.net.http.HttpResponse;
 import java.util.*;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -41,6 +47,11 @@ public class WikiSourceTask extends SourceTask {
 
     public static final String TASK_ID = "task.id";
 
+    private Metrics metrics;
+
+    private static final String WIKI_IN = "wiki.incoming";
+    private static final String WIKI_OUT = "wiki.written";
+
     @Override
     public String version() {
         log.debug("version()");
@@ -54,10 +65,45 @@ public class WikiSourceTask extends SourceTask {
         languageToSelect = wikiSourceConfig.getWikiLanguageConfig();
         outputTopic = wikiSourceConfig.getTargetTopicConfig();
         objectMapper = new ObjectMapper();
+        setupMetrics();
         sseThread = new Thread(this::runSse);
         sseThread.start();
     }
 
+    /**
+     * Try to set up metrics with a sensor for number of events emitted.
+     */
+    private void setupMetrics() {
+        log.info("setupMetrics()");
+        MetricConfig mConfig = new MetricConfig();
+        mConfig.timeWindow(100, TimeUnit.MILLISECONDS);
+        mConfig.recordLevel(Sensor.RecordingLevel.INFO);
+
+        List<MetricsReporter> reporters = new ArrayList<>();
+        JmxReporter jmxReporter = new JmxReporter();
+        jmxReporter.configure(new HashMap<>());
+        reporters.add(jmxReporter);
+
+        Map<String, Object> labels = Map.of("wiki.name","example","wiki.foo","bar");
+        MetricsContext metricsContext = new KafkaMetricsContext("wiki.connectexample", labels);
+
+        this.metrics = new Metrics(mConfig, reporters, Time.SYSTEM, metricsContext);
+        MetricName mName = new MetricName("wiki.dummy","wiki.dummygroup","example dummy metric", Map.of("tag","example"));
+        Measurable dummy = new Value();
+        metrics.addMetric(mName, dummy);
+
+        var wikiCountIn = metrics.sensor(WIKI_IN);
+        MetricName mName2 = metrics.metricName("read","wiki.group","wiki records in");
+        wikiCountIn.add(mName2, new CumulativeSum());
+
+        var wikiCountOut = metrics.sensor(WIKI_OUT);
+        MetricName mName3 = metrics.metricName("written","wiki.group","wiki records out");
+        wikiCountOut.add(mName3, new CumulativeSum());
+    }
+
+    /**
+     * SSE event listener method, running in a separate thread.
+     */
     private void runSse() {
         Stream<String> sseEvents = null;
         try {
@@ -89,12 +135,15 @@ public class WikiSourceTask extends SourceTask {
         lastPoll = now;
         List<String> linesToSend = new ArrayList<>();
         incomingEvents.drainTo(linesToSend);
+        metrics.getSensor(WIKI_IN).record(linesToSend.size());
         log.trace("poll(): Got {} lines", linesToSend.size());
-        return linesToSend.stream()
+        var filtered = linesToSend.stream()
                 .map(this::convertToSourceRecord)
                 .filter(Optional::isPresent)
                 .map(Optional::get)
                 .collect(Collectors.toList());
+        metrics.getSensor(WIKI_OUT).record(filtered.size());
+        return filtered;
     }
 
     @Override
