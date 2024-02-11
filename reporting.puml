@@ -1,0 +1,51 @@
+@startuml
+'https://plantuml.com/class-diagram
+
+title Kafka reporting classes (partial)
+
+interface Stat {
+    record(MetricConfig,double,long)
+}
+
+interface Measurable {
+    measure(MetricConfig,long):double
+}
+
+Interface MeasurableStat
+
+Measurable <|-- MeasurableStat
+Stat <|-- MeasurableStat
+
+class Metrics {
+    metrics: Map<MetricName,KafkaMetric>
+    sensors:Map<String,Sensor>
+    ---
+    addMetric(MetricName,Measurable)
+    addMetric(MetricName,ValueProvider)
+
+    sensor(name:String):Sensor
+    <i>this method creates <b>and</b> adds the sensor</i>
+}
+
+class Sensor {
+    add(MetricName,MeasurableStat)
+}
+
+class MetricsContext {
+    - namespace: String
+    - contextLabels: Map<String, ?>
+}
+class MetricConfig {
+    - timeWindow
+    - recordLevel
+    - ...
+}
+
+class List<MetricsReporter>
+List *-- JmxReporter
+
+Metrics *-- MetricsContext
+Metrics *-- MetricConfig
+Metrics *-- List
+
+@enduml
