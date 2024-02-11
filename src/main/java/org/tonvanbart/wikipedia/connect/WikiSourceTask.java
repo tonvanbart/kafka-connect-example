@@ -84,11 +84,11 @@ public class WikiSourceTask extends SourceTask {
         jmxReporter.configure(new HashMap<>());
         reporters.add(jmxReporter);
 
-        Map<String, Object> labels = Map.of("wiki.name","example","wiki.foo","bar");
+        Map<String, Object> labels = Map.of("wiki.label1","label1.value","wiki.label2","label2.value");
         MetricsContext metricsContext = new KafkaMetricsContext("wiki.connectexample", labels);
 
         this.metrics = new Metrics(mConfig, reporters, Time.SYSTEM, metricsContext);
-        MetricName mName = new MetricName("wiki.dummy","wiki.dummygroup","example dummy metric", Map.of("tag","example"));
+        MetricName mName = new MetricName("wiki.dummy","wiki.dummygroup","example dummy metric", Map.of("example_tag_name","example_tag_value"));
         Measurable dummy = new Value();
         metrics.addMetric(mName, dummy);
 
