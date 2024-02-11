@@ -34,7 +34,7 @@ class Sensor {
     record(double):void
     record(double,long):void
 
-    <i>These update all registered stats</i>
+    <i>These update all registered stats<i>
 }
 
 class MetricsContext {
