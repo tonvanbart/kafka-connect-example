@@ -28,7 +28,13 @@ class Metrics {
 }
 
 class Sensor {
+    ---
     add(MetricName,MeasurableStat)
+    record(): void
+    record(double):void
+    record(double,long):void
+
+    <i>These update all registered stats</i>
 }
 
 class MetricsContext {
